@@ -15,6 +15,8 @@ export default function ChatBox() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadNotifcation, setUploadNotification] = useState(false);
+  const [generateType, setGenerateType] = useState('select_type');
+  const [selectType, setSelectType] = useState(false);
 
   const fetchMessages = () => {
     // TODO: API call to backend to fetch messages
@@ -53,7 +55,20 @@ export default function ChatBox() {
     }
 
     formData.append('text', text);
-    formData.append('type', inputType);
+    let finalType = '';
+    if(inputType === 0){
+      if(generateType !== 'select_type'){
+        finalType = 'generate_' + generateType;
+      }else{
+        setSelectType(true);
+      }
+    }else if(inputType === 1){
+      finalType = 'simplify';
+    }else{
+      finalType = 'qa';
+    }
+
+    formData.append('type', finalType);
     
     // TODO: send the data to the backend and update state accordingly
     for(const data of formData.values()){
@@ -62,6 +77,11 @@ export default function ChatBox() {
     setUploadNotification(true);
   };
 
+  const handleGenerateType = (event) => {
+    if(event.target.value !== 'select_type'){
+      setGenerateType(event.target.value);
+    }
+  }
 
   useEffect(() => {
     fetchMessages();
@@ -89,6 +109,11 @@ export default function ChatBox() {
           Your file has been uploaded!
         </Alert>
       </Snackbar>
+      <Snackbar open={selectType} autoHideDuration={4000} onClose={() => setSelectType(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
+        <Alert onClose={() => setSelectType(false)} severity="error" sx={{ width: '100%' }}>
+          Please select a document type
+        </Alert>
+      </Snackbar>
       <Paper elevation={0} sx={{padding: '20px 40px', margin: '0 40px', width: 'max(80vw, 1000px)'}}>
         <Box sx={{display: 'flex', flexDirection: 'column', padding: '0 5px', maxHeight: '40vh', overflowY: 'scroll', ...scrollStyles}}>
           {messages.map(message => {
@@ -103,7 +128,14 @@ export default function ChatBox() {
           <InputTypeSelection value={inputType} handleChange={handleInputType}></InputTypeSelection>
         </Box>
         <form onSubmit={handleSubmit}>
-          <InputTextBar value={text} handleUpload={handleUpload} onChange={(event) => setText(event.target.value)} handleSubmit={handleSubmit}></InputTextBar>
+          <InputTextBar 
+            value={text}
+            showGenerateType={inputType === 0}
+            handleGenerateType={handleGenerateType}
+            handleUpload={handleUpload} onChange={(event) => setText(event.target.value)}
+            handleSubmit={handleSubmit}
+          >
+          </InputTextBar>
         </form>
       </Paper>
     </Box>
