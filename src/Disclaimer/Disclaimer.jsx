@@ -1,39 +1,14 @@
 import { Box, Card, CardContent, Divider, Typography } from '@mui/material'
 import React, { useState, useEffect } from 'react'
-import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, TextField, DialogActions } from '@mui/material';
+import { Button, Dialog, DialogContent, DialogContentText, DialogTitle, TextField, DialogActions, Snackbar, Alert } from '@mui/material';
+import axios from 'axios';
 
 const Disclaimer = () => {
 
   const [open, setOpen] = useState(false); 
   const [location, setLocation] = useState('');
   const [pincode, setPincode] = useState('');
-
-  const getLocation = () => {
-    if (navigator.geolocation) {
-      navigator.permissions
-        .query({ name: "geolocation" })
-        .then(function (result) {
-          if (result.state === "granted") {
-            //If granted then you can directly call your function here
-          } else if (result.state === "prompt") {
-            // prompts users
-            setOpen(true);
-          } else if (result.state === "denied") {
-            //If denied then you have to show instructions to enable location
-            setOpen(true);
-          }
-          result.onchange = function () {
-            console.log(result.state);
-          };
-        });
-    } else {
-      alert("Sorry Not available!");
-    }
-  }
-
-  const handleClick = () => {
-    getLocation();
-  }
+  const [locationError, setLocationError] = useState(false);
 
   const handleClose = () => {
     setOpen(false);
@@ -41,23 +16,42 @@ const Disclaimer = () => {
 
   const handlePincodeChange = (event) => {
     setPincode(event.target.value);
-    console.log(pincode);
   }
 
-  const handlePinCode = () => {
-    // TODO: get location from pincode 
-  }
+  const handlePincode = async () => {
+    // pincode is not set
+    if(pincode === ''){
+      setOpen(true);
+      return;
+    }
 
+    const PINCODE_API = 'https://api.postalpincode.in/pincode/';
+
+    const responseJSON = await axios.get(PINCODE_API + pincode);
+    const response = responseJSON.data[0];
+    if(response['Status'] === 'Success'){
+      setLocation(response['PostOffice'][0]['District']);
+    }else{
+      setPincode('');
+      setLocationError(true);
+    }
+    setOpen(false);
+  }
 
   return (
     <Box sx={{display: 'flex', justifyContent: 'center'}}>
+      <Snackbar open={locationError} autoHideDuration={4000} onClose={() => setLocationError(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
+        <Alert onClose={() => setLocationError(false)} severity="error" sx={{ width: '100%' }}>
+          Invalid Pincode
+        </Alert>
+      </Snackbar>
       <Card variant='outlined' sx={{margin: '10px', width: 'min(900px, 30vw)'}}>
         <CardContent>
           <Typography>
             I'm a bot. I can assist you but I'm no way better than a human. You should always consider a professional's opinion before taking legal steps.
           </Typography>
           <Divider sx={{marginY: '20px'}}/>
-          <Button variant='contained' onClick={handleClick}>
+          <Button variant='contained' onClick={handlePincode}>
             Contact professionals near you
           </Button>
           <Dialog open={open} onClose={handleClose}>
@@ -79,7 +73,7 @@ const Disclaimer = () => {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleClose}>Close</Button>
-              <Button onClick={handlePinCode}>Submit</Button>
+              <Button onClick={handlePincode}>Submit</Button>
             </DialogActions>
           </Dialog>
         </CardContent>
