@@ -1,8 +1,8 @@
 import React from 'react';
-import './App.css';
-import HomePage from './HomePage/HomePage.jsx';
 import { createTheme, ThemeProvider } from '@mui/material/styles'; 
-
+import './App.css';
+import AuthProvider from './provider/AuthProvider';
+import Routes from './routes';
 
 const darkTheme = createTheme({ 
   overrides: {
@@ -41,10 +41,13 @@ const darkTheme = createTheme({
 // const lightTheme = createTheme({ palette: { mode: 'light' } });
 
 function App() {
+  // TODO: Authentication
   return (
     <div className="App">
       <ThemeProvider theme={darkTheme}>
-        <HomePage />
+        <AuthProvider>
+          <Routes />
+        </AuthProvider>
       </ThemeProvider>
     </div>
   );
