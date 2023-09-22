@@ -58,14 +58,15 @@ export default function ChatBox() {
     let finalType = '';
     if(inputType === 0){
       if(generateType !== 'select_type'){
-        finalType = 'generate_' + generateType;
+        finalType = 'generate';
+        formData.append('document_class', generateType);
       }else{
         setSelectType(true);
       }
     }else if(inputType === 1){
       finalType = 'simplify';
     }else{
-      finalType = 'qa';
+      finalType = 'query';
     }
 
     formData.append('type', finalType);
