@@ -10,6 +10,10 @@ const Routes = () => {
   // Define public routes accessible to all users
   const routesForPublic = [
     {
+      path: "/",
+      element: <HomePage />
+    },
+    {
       path: "/login",
       element: <LoginPage />,
     },
@@ -21,10 +25,10 @@ const Routes = () => {
       path: "/",
       element: <ProtectedRoute />, // Wrap the component in ProtectedRoute
       children: [
-        {
-          path: "/",
-          element: <HomePage />,
-        },
+        // {
+        //   path: "/",
+        //   element: <HomePage />,
+        // },
         {
           path: "/logout",
           element: <div>Logout</div>,

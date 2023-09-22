@@ -6,6 +6,7 @@ import InputTypeSelection from '../InputTypeSelection/InputTypeSelection';
 import InputTextBar from '../InputTextBar/InputTextBar';
 import { SyncLoader } from 'react-spinners';
 import { grey } from '@mui/material/colors';
+import axios from 'axios';
 
 export default function ChatBox() {
 
@@ -17,6 +18,7 @@ export default function ChatBox() {
   const [uploadNotifcation, setUploadNotification] = useState(false);
   const [generateType, setGenerateType] = useState('select_type');
   const [selectType, setSelectType] = useState(false);
+  const [messageError, setMessageError] = useState(false);
 
   const fetchMessages = () => {
     // TODO: API call to backend to fetch messages
@@ -27,11 +29,11 @@ export default function ChatBox() {
         type: 'bot',
         content: "Hello! I'm your legal assistant"
       },
-      {
-        id: 2,
-        type: 'user',
-        content: "Hey. Can you help me with my docs?"
-      }
+      // {
+      //   id: 2,
+      //   type: 'user',
+      //   content: "Hey. Can you help me with my docs?"
+      // }
     ];
     setMessages(data);
   };
@@ -57,12 +59,12 @@ export default function ChatBox() {
     formData.append('text', text);
     let finalType = '';
     if(inputType === 0){
-      if(generateType !== 'select_type'){
-        finalType = 'generate';
-        formData.append('document_class', generateType);
-      }else{
+      if(generateType === 'select_type'){
         setSelectType(true);
+        return;
       }
+      finalType = 'generate';
+      formData.append('document_class', generateType);
     }else if(inputType === 1){
       finalType = 'simplify';
     }else{
@@ -75,7 +77,31 @@ export default function ChatBox() {
     for(const data of formData.values()){
       console.log(data);
     }
-    setUploadNotification(true);
+
+    setLoading(true);
+
+    try{
+      const response = await axios({
+        method: 'post',
+        url: 'http://localhost:5000/process',
+        data: formData,
+        headers: {
+          'Content-Type': `multipart/form-data`
+        }
+      });
+      console.log(response);
+      if(response.status !== 200){
+        setMessageError(true);
+        setLoading(false);
+        return;
+      }
+      setMessages([...messages, response.data['response']]);
+    }catch(err){
+      setMessageError(true);
+    }
+
+    setLoading(false);
+    
   };
 
   const handleGenerateType = (event) => {
@@ -105,14 +131,19 @@ export default function ChatBox() {
 
   return (
     <Box sx={{display:'flex',flexDirection: 'column', alignItems: 'center'}}>
-      <Snackbar open={uploadNotifcation} autoHideDuration={6000} onClose={() => setUploadNotification(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
+      <Snackbar open={uploadNotifcation} autoHideDuration={3000} onClose={() => setUploadNotification(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
         <Alert onClose={() => setUploadNotification(false)} severity="success" sx={{ width: '100%' }}>
           Your file has been uploaded!
         </Alert>
       </Snackbar>
-      <Snackbar open={selectType} autoHideDuration={4000} onClose={() => setSelectType(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
+      <Snackbar open={selectType} autoHideDuration={3000} onClose={() => setSelectType(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
         <Alert onClose={() => setSelectType(false)} severity="error" sx={{ width: '100%' }}>
           Please select a document type
+        </Alert>
+      </Snackbar>
+      <Snackbar open={messageError} autoHideDuration={3000} onClose={() => setMessageError(false)} anchorOrigin={{vertical:'top', horizontal:'center'}}>
+        <Alert onClose={() => setMessageError(false)} severity="error" sx={{ width: '100%' }}>
+          Failed to send the message. Try again!
         </Alert>
       </Snackbar>
       <Paper elevation={0} sx={{padding: '20px 40px', margin: '0 40px', width: 'max(80vw, 1000px)'}}>
