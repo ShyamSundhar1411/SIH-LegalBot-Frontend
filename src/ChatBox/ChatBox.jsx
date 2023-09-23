@@ -7,6 +7,7 @@ import InputTextBar from '../InputTextBar/InputTextBar';
 import { SyncLoader } from 'react-spinners';
 import { grey } from '@mui/material/colors';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function ChatBox() {
 
@@ -19,6 +20,7 @@ export default function ChatBox() {
   const [generateType, setGenerateType] = useState('select_type');
   const [selectType, setSelectType] = useState(false);
   const [messageError, setMessageError] = useState(false);
+  const [firstGenerate, setFirstGenerate] = useState(true);
 
   const fetchMessages = () => {
     // TODO: API call to backend to fetch messages
@@ -38,6 +40,28 @@ export default function ChatBox() {
     setMessages(data);
   };
 
+  const firstGeneratePrompt = async () => {
+    const URL = 'http://localhost:5000/process';
+    let json = {};
+    json['prompt'] = '';
+    json['class'] = 'generate';
+    json['document_class'] = generateType;
+    
+    console.log("First prompt of type " + generateType);
+    
+    const response = await fetch(URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(json),
+      mode: 'cors'
+    });
+    setFirstGenerate(prev => false);
+    
+    console.log(response);
+  };
+
   const handleInputType = (event, nextValue) => {
     setInputType(nextValue);
   };
@@ -50,13 +74,20 @@ export default function ChatBox() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setMessages(prev => [...prev, {
+      id: uuidv4(),
+      type: 'user',
+      content: text
+    }]);
     let formData = new FormData();
+    let json = {};
     
     if(file != null){
       formData.append('file', file);
     }
 
-    formData.append('text', text);
+    formData.append('prompt', text);
+    json['prompt'] = text;
     let finalType = '';
     if(inputType === 0){
       if(generateType === 'select_type'){
@@ -65,38 +96,53 @@ export default function ChatBox() {
       }
       finalType = 'generate';
       formData.append('document_class', generateType);
+      json['document_class'] = generateType;
     }else if(inputType === 1){
       finalType = 'simplify';
     }else{
       finalType = 'query';
     }
 
-    formData.append('type', finalType);
+    formData.append('class', finalType);
+    json['class'] = finalType;
     
-    // TODO: send the data to the backend and update state accordingly
-    for(const data of formData.values()){
-      console.log(data);
+    if(finalType === 'generate'){
+      if(firstGenerate){
+        await firstGeneratePrompt();
+      }
+    }else{
+      setFirstGenerate(true);
     }
 
     setLoading(true);
 
+    const URL = 'http://localhost:5000/process';
+
     try{
-      const response = await axios({
-        method: 'post',
-        url: 'http://localhost:5000/process',
-        data: formData,
+      const response = await fetch(URL, {
+        method: 'POST',
         headers: {
-          'Content-Type': `multipart/form-data`
-        }
-      });
-      console.log(response);
-      if(response.status !== 200){
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(json)
+      })
+      
+      if(response['status'] !== 200){
         setMessageError(true);
         setLoading(false);
         return;
       }
-      setMessages([...messages, response.data['response']]);
+      let responseJSON = await response.json();
+      console.log(responseJSON);
+      let message = {
+        id: uuidv4(),
+        type: 'bot',
+        content: responseJSON['response']
+      }
+      setMessages(prev => [...prev, message]);
     }catch(err){
+      console.log(err);
+      setLoading(false);
       setMessageError(true);
     }
 
@@ -107,6 +153,7 @@ export default function ChatBox() {
   const handleGenerateType = (event) => {
     if(event.target.value !== 'select_type'){
       setGenerateType(event.target.value);
+      setFirstGenerate(true);
     }
   }
 
