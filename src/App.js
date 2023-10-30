@@ -1,57 +1,18 @@
-import React from 'react';
-import { createTheme, ThemeProvider } from '@mui/material/styles'; 
-import './App.css';
-import AuthProvider from './provider/AuthProvider';
-import Routes from './routes';
+import React from "react";
+import { Helmet } from "react-helmet";
+// Screens
+import Landing from "./screens/Landing.jsx";
 
-const darkTheme = createTheme({ 
-  overrides: {
-    MuiCssBaseline: {
-      "@global": {
-        body: {
-          scrollbarColor: "#6b6b6b #2b2b2b",
-          "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
-            backgroundColor: "#2b2b2b",
-          },
-          "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
-            borderRadius: 8,
-            backgroundColor: "#6b6b6b",
-            minHeight: 24,
-            border: "3px solid #2b2b2b",
-          },
-          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": {
-            backgroundColor: "#959595",
-          },
-          "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active": {
-            backgroundColor: "#959595",
-          },
-          "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#959595",
-          },
-          "&::-webkit-scrollbar-corner, & *::-webkit-scrollbar-corner": {
-            backgroundColor: "#2b2b2b",
-          },
-        },
-      },
-    },
-  },
-  palette: { mode: 'dark' } 
-});
-
-// const lightTheme = createTheme({ palette: { mode: 'light' } });
-
-function App() {
-  // TODO: Authentication
+export default function App() {
   return (
-    <div className="App">
-      <ThemeProvider theme={darkTheme}>
-        <AuthProvider>
-          <Routes />
-        </AuthProvider>
-      </ThemeProvider>
-    </div>
+    <>
+      <Helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link href="https://fonts.googleapis.com/css2?family=Khula:wght@400;600;800&display=swap" rel="stylesheet" />
+      </Helmet>
+      <Landing />
+    </>
   );
 }
-
-export default App;
 
